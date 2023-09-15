@@ -118,8 +118,7 @@ const Home: React.FC = () => {
 
 export default Home;
 
-
-export default Home;
+ 
 
 
  
