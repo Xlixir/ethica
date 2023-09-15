@@ -9,7 +9,10 @@ type Review = {
   text: string;
   upvotes: number;
   downvotes: number;
-  classification?: 'positive' | 'negative' | 'neutral' | 'unknown';
+  classification?: {
+    sentiment: "positive" | "negative" | "neutral" | "unknown";
+    name: string;  // This is the user's first name
+  };
   date: Date;
 }
 
@@ -35,22 +38,25 @@ const Home: React.FC = () => {
     return reviews.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
   };
 
-  const handleAnalyse = async (): Promise<'positive' | 'negative' | 'neutral' | 'unknown'> => {
+  const handleAnalyse = async (): Promise<{ sentiment: 'positive' | 'negative' | 'neutral' | 'unknown', name: string }> => {
     try {
-      const res = await fetch('/api/sentiment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reviewText: review })
-      });
+      const response = await axios.post('/api/sentiment', { reviewText: review });
+      const data = response.data;
+      return {
+        sentiment: data.label,
+        name: user && user.firstName ? user.firstName : 'unknown'
 
-      const data = await res.json();
-      return data.label;
+      };
     } catch (error) {
-      return user.firstName || 'unknown';
+      return {
+        sentiment: 'unknown',
+        name: user && user.firstName ? user.firstName : 'unknown'
+
+      };
     }
   };
+
+  
 
   return (
     <div className="flex flex-col justify-between items-start w-full h-screen p-4">
@@ -82,7 +88,13 @@ const Home: React.FC = () => {
         {reviews.map((r, index) => (
           <div key={index} className="flex justify-between border-b pb-2 mb-2">
             <div>
-              <p>{r.text} <span className="text-gray-500">({r.classification})</span></p>
+            <p>
+  {r.text} 
+  <span className="text-gray-500">
+    {r.classification ? `${r.classification.sentiment} by ${r.classification.name}` : ''}
+  </span>
+</p>
+
               <p className="text-sm text-gray-400">{r.date.toLocaleString()}</p>
             </div>
             <div>
